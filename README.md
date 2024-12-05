@@ -73,13 +73,15 @@ Make sure you have the following installed:
     # You can access the fastapi on the following URL
     http://localhost:8000/
 
-    # Now you need to initialize the data processing, for which you need to store event, and stats related files in the root level data directory.
+    # Now you need to initialize the data processing, for which you need to store event,
+    # and stats related files in the root level data directory.
     cp -r data_dir/ data/
 
     # Now you can run the custom_package to get the data, you need to use the following URL
     http://localhost:8000/process_data
 
-    # This will store the data, in the database, now you can use the fastapi, and streamlit, now when the data is stored in the database.
+    # This will store the data, in the database, now you can use the fastapi, and streamlit,
+    # now when the data is stored in the database.
 
     #FastApi documentation, and usage can be seen on this URL.
     http://localhost:8000/docs
@@ -87,9 +89,12 @@ Make sure you have the following installed:
     # You can use the streamlit application on the following link.
     http://localhost:8501/
 
-    # In the Streamlit dashboard, you can see either z-score normalize data for each player on various metrics to do scaling of the data on various metrics, Or you can use normal metrics for seeing actual value of the metrics.
+    # In the Streamlit dashboard, you can see either z-score normalize data for each player on
+    # various metrics to do scaling of the data on various metrics, Or you can use normal metrics
+    # for seeing actual value of the metrics.
 
-    # The Dashboard is configured in such a way that you can choose individual player, and then see the performance of that player on a radar chart.
+    # The Dashboard is configured in such a way that you can choose individual player, and then see
+    # the performance of that player on a radar chart.
 
 
 ```
