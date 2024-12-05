@@ -96,6 +96,8 @@ Make sure you have the following installed:
     # The Dashboard is configured in such a way that you can choose individual player, and then see
     # the performance of that player on a radar chart.
 
+    # You can also see the queries, and their results in queries_and_results.txt file.
+
 
 ```
 
