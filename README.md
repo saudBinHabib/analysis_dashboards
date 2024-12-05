@@ -1,271 +1,130 @@
-SELECT COUNT(id) FROM events where type_id = 1 AND team_id='apoawtpvac4zqlancmvw4nk4o';
-count
+# Live Streamlit Dashboard
 
----
+![Dashboard Image 1](static_files/streamit.png)
+![Dashboard Image 2](static_files/streamit.png)
 
-6639
+## Introduction
 
-fcb_analytics=# SELECT COUNT(id) from events WHERE type_id = 1 AND outcome = '1' AND team_id = 'apoawtpvac4zqlancmvw4nk4o';
-count
+This project is a live dashboard built using Streamlit and Python. It provides real-time data visualization and analytics, making it easy to monitor and analyze data on the fly.
 
----
+## Getting Started
 
-5570
-(1 row)
+Follow the instructions below to get a copy of the project up and running on your local machine for development and testing purposes.
 
-1. fcb_analytics=# SELECT COUNT(events.id) from events inner join qualifiers ON (events.e_id = qualifiers.event_id) WHERE type_id = 1 AND team_id = 'apoawtpvac4zqlancmvw4
-   nk4o' AND qualifiers.qualifier_id not IN (2, 107, 123);
-   count
+### Prerequisites
 
----
+Make sure you have the following installed:
 
-42966
-(1 row)
+- Python 3.11 or higher
+- pip (Python package installer)
+- Jupyter Notebook
+- Docker
+- Docker-Compose
 
-2. fcb_analytics=# SELECT COUNT(events.id) from events inner join qualifiers ON (events.e_id = qualifiers.event_id) WHERE type_id = 1 AND outcome = '1' AND team_id = 'apoa
-   wtpvac4zqlancmvw4nk4o' AND qualifiers.qualifier_id not IN (2, 107, 123);
-   count
+### Installation
 
----
+1. Clone the repository:
 
-35076
-(1 row)
+   ```sh
+   git clone git@github.com:saudBinHabib/analysis_dashboards.git
+   cd fcb_data_analytics
+   ```
 
-3. fcb_analytics=# SELECT COUNT(events.player_id) from events inner join qualifiers ON (events.e_id = qualifiers.event_id) WHERE type_id IN (13, 14, 15, 60) AND team_id =
-   'apoawtpvac4zqlancmvw4nk4o' AND qualifiers.qualifier_id IN (29, 55);
-   count
+2. Install the required packages:
 
----
+   ```sh
+   You need to make sure that, you have docker, and docker-compose installed.
+   ```
 
-232
+## 📊 Features
 
-4. SELECT COUNT(events.player_id) from events inner join qualifiers ON (events.e_id = qualifiers.event_id) WHERE type_id = 1 AND qualifiers.qualifier_id =
-   1 AND team_id = 'apoawtpvac4zqlancmvw4nk4o' AND qualifiers.qualifier_id NOT IN (2, 107, 123);
-   count
+### Data Processing
 
----
+- Custom Python package for match data processing
+- Efficient event data extraction
+- FastApi implementation of the metrics, So you can use those metrics, for otehr Dashboards
+- Streamlit implementation of the Radar Chart
+- Dockerise solution
+- Docker-compose run all the applications.
 
-635
-(1 row)
+## 🛠 Tech Stack
 
-5. fcb_analytics=# SELECT COUNT(events.player_id) from events inner join qualifiers ON (events.e_id = qualifiers.event_id) WHERE type_id = 1 AND qualifiers.qualifier_id =
-   95 AND team_id = 'apoawtpvac4zqlancmvw4nk4o' AND qualifiers.qualifier_id NOT IN (2, 107, 123);
-   count
+### Backend
 
----
+- Python 3.11+
+- FastAPI
+- StreamLit
+- PostgreSQL
+- SQLAlchemy
+- Pydantic
+- Pandas
+- Logging
+- Docker
+- Docker Compose
+- pre-commit hooks
 
-     0
+## Using `docker-compose` package
 
-6. fcb_analytics=# SELECT COUNT(events.player_id) from events inner join qualifiers ON (events.e_id = qualifiers.event_id) WHERE type_id IN (13, 14, 15, 16) AND team_id =
-   'apoawtpvac4zqlancmvw4nk4o';
-   count
+```sh
 
----
+    # Running docker compose file
+    docker-compose up
 
-2922
-(1 row)
+    # You can access the fastapi on the following URL
+    http://localhost:8000/
 
-13 Miss A shot which goes/is projected to travel wide or over the goal. outcome: always set to 1
-14 Post A shot which directly hits the frame of the goal. outcome: always set to 1
-15 Attempt Saved A shot which is saved by the goalkeeper or blocked by an opposition player. The player performing the event is the shooter. outcome: always set to 1
-16 Goal Attributing a goal to the goal scoring player. Given any contention around assigning a goal to an appropriate player, Opta applies its own rules and when applicable aligns decisions to the relevant official competition governing body. outcome: always set to 1
+    # Now you need to initialize the data processing, for which you need to store event, and stats related files in the root level data directory.
+    cp -r data_dir/ data/
 
-7. fcb_analytics=# SELECT COUNT(events.player_id) from events inner join qualifiers ON (events.e_id = qualifiers.event_id) WHERE type_id = 4 AND team_id = 'apoawtpvac4zql
-   ancmvw4nk4o';
-   count
+    # Now you can run the custom_package to get the data, you need to use the following URL
+    http://localhost:8000/process_data
 
----
+    # This will store the data, in the database, now you can use the fastapi, and streamlit, now when the data is stored in the database.
 
-1135
-(1 row)
+    #FastApi documentation, and usage can be seen on this URL.
+    http://localhost:8000/docs
 
-4 Foul Indicates a foul has been committed. The event comes in pairs, with one for the team committing the foul (has outcome = 0) and another for the team fouled (outcome = 1).
+    # You can use the streamlit application on the following link.
+    http://localhost:8501/
 
-44 Aerial Two players from opposing teams contest an aerial ball; these events come in pairs, one for each player, with the outcome indicating the success/failure of the aerial duel.
-outcome = 0 - Player lost aerial duel
-outcome = 1 - Player won aerial duel
+    # In the Streamlit dashboard, you can see either z-score normalize data for each player on various metrics to do scaling of the data on various metrics, Or you can use normal metrics for seeing actual value of the metrics.
 
-Q_ID
-264 Aerial Foul A foul was committed aerially (in or via the air)
+    # The Dashboard is configured in such a way that you can choose individual player, and then see the performance of that player on a radar chart.
 
-8. fcb_analytics=# SELECT COUNT(events.player_id) from events inner join qualifiers ON (events.e_id = qualifiers.event_id) WHERE type_id = 4 AND team_id = 'apoawtpvac4zqlancmvw4nk4o' AND events.outcome = '1';
-   count
 
----
+```
 
-583
-(1 row)
+## Data Exploration Using Jupyter Notebooks
 
-51.36%
+The `notebooks` directory contains Jupyter Notebooks for data exploration. To start exploring the data, follow these steps:
 
---------- Group By
+1. Navigate to the `notebooks` directory:
 
-1. SELECT p.match_name, COUNT(e.player_id) from events e inner join qualifiers q ON (e.e_id = q.event_id) inner join players p ON (e.player_id = p.id) WHERE e.type_id = 1 AND e.team_id = 'apoawtpvac4zqlancm
-   vw4nk4o' AND q.qualifier_id not IN (2, 107, 123) GROUP BY 1 ORDER BY 1;
-   match_name | count
-   ------------------+-------
-   A. Davies | 3466
-   B. Pavard | 1067
-   B. Sarr | 187
-   C. Richards | 20
-   C. Tolisso | 325
-   D. Upamecano | 4006
-   E. Choupo-Moting | 323
-   J. Kimmich | 5750
-   J. Musiala | 814
-   J. Stanišić | 2154
-   K. Coman | 606
-   L. Goretzka | 2363
-   L. Hernández | 3424
-   L. Sané | 1859
-   M. Sabitzer | 1174
-   N. Süle | 4077
-   O. Richards | 809
-   R. Lewandowski | 1338
-   S. Gnabry | 2199
-   T. Müller | 3164
-   T. Nianzou | 543
-   (21 rows)
+   ```sh
+   cd notebooks
+   ```
 
-2. SELECT p.match_name, COUNT(e.player_id) from events e inner join qualifiers q ON (e.e_id = q.event_id) inner join players p ON (e.player_id = p.id) WHERE e.type_id = 1 AND e.outcome = '1' AND e.team_id = 'apoawtpvac4zqlancmvw4nk4o' AND q.qualifier_id not IN (2, 107, 123) GROUP BY 1 ORDER BY 1;
-   match_name | count
-   ------------------+-------
-   A. Davies | 2799
-   B. Pavard | 882
-   B. Sarr | 123
-   C. Richards | 20
-   C. Tolisso | 262
-   D. Upamecano | 3558
-   E. Choupo-Moting | 216
-   J. Kimmich | 4589
-   J. Musiala | 708
-   J. Stanišić | 1767
-   K. Coman | 430
-   L. Goretzka | 1912
-   L. Hernández | 2975
-   L. Sané | 1502
-   M. Sabitzer | 958
-   N. Süle | 3556
-   O. Richards | 657
-   R. Lewandowski | 979
-   S. Gnabry | 1697
-   T. Müller | 2237
-   T. Nianzou | 475
-   (21 rows)
+2. Create Jupyter Notebook:
 
-3. SELECT p.match_name, COUNT(e.player_id) from events e inner join qualifiers q ON (e.e_id = q.event_id) inner join players p ON (e.player_id = p.id) WHERE e.type_id IN (13, 14, 15, 60) AND e.team_id ='apoawtpvac4zqlancmvw4nk4o' AND q.qualifier_id IN (29, 55) GROUP BY 1 ORDER BY 1;
-   match_name | count
-   ------------------+-------
-   A. Davies | 8
-   C. Tolisso | 2
-   D. Upamecano | 4
-   E. Choupo-Moting | 4
-   J. Kimmich | 10
-   J. Musiala | 4
-   J. Stanišić | 4
-   K. Coman | 12
-   L. Goretzka | 32
-   L. Sané | 42
-   M. Sabitzer | 8
-   N. Süle | 18
-   R. Lewandowski | 48
-   S. Gnabry | 20
-   T. Müller | 16
-   (15 rows)
+   ```sh
+   touch data-exploration.ipynb
+   ```
 
-4. SELECT p.match_name, COUNT(e.player_id) from events e inner join qualifiers q ON (e.e_id = q.event_id) inner join players p ON (e.player_id = p.id) WHERE e.type_id = 1 AND q.qualifier_id =
-   1 AND e.team_id = 'apoawtpvac4zqlancmvw4nk4o' AND q.qualifier_id NOT IN (2, 107, 123) GROUP BY 1 ORDER BY 1;
-   match_name | count
-   ------------------+-------
-   A. Davies | 36
-   B. Pavard | 15
-   B. Sarr | 2
-   C. Richards | 1
-   C. Tolisso | 3
-   D. Upamecano | 61
-   E. Choupo-Moting | 2
-   J. Kimmich | 107
-   J. Musiala | 5
-   J. Stanišić | 26
-   K. Coman | 5
-   L. Goretzka | 26
-   L. Hernández | 45
-   L. Sané | 11
-   M. Sabitzer | 11
-   N. Süle | 56
-   O. Richards | 7
-   R. Lewandowski | 7
-   S. Gnabry | 16
-   T. Müller | 38
-   T. Nianzou | 8
-   (21 rows)
+3. Open any of the notebooks to start exploring the data.
 
-5. SELECT p.match_name, COUNT(e.player_id) from events e inner join qualifiers q ON (e.e_id = q.event_id) inner join players p ON (e.player_id = p.id) WHERE e.type_id = 1 AND q.qualifier_id =
-   95 AND e.team_id = 'apoawtpvac4zqlancmvw4nk4o' AND q.qualifier_id NOT IN (2, 107, 123);
+## Contributing
 
-6. fcb_analytics=# SELECT p.match_name, COUNT(e.player_id) from events e inner join qualifiers q ON (e.e_id = q.event_id) inner join players p ON (e.player_id = p.id) WHERE e.type_id IN (13, 14, 15, 16) AND e.team_id = 'apoawtpvac4zqlancmvw4nk4o' GROUP BY 1 ORDER BY 1;
-   match_name | count
-   ------------------+-------
-   A. Davies | 65
-   C. Tolisso | 18
-   D. Upamecano | 31
-   E. Choupo-Moting | 113
-   J. Kimmich | 164
-   J. Musiala | 64
-   J. Stanišić | 47
-   K. Coman | 143
-   L. Goretzka | 365
-   L. Sané | 464
-   M. Sabitzer | 70
-   N. Süle | 159
-   R. Lewandowski | 702
-   S. Gnabry | 303
-   T. Müller | 214
-   (15 rows)
+If you would like to contribute to this project, please fork the repository and submit a pull request. We welcome all contributions!
 
-7. fcb_analytics=# SELECT p.match_name, COUNT(e.player_id) from events e inner join qualifiers q ON (e.e_id = q.event_id) inner join players p ON (e.player_id = p.id) WHERE e.type_id = 4 AND e.team_id = 'apoawtpvac4zqlancmvw4nk4o' Group By 1 ORDER BY 1;
-   match_name | count
-   ------------------+-------
-   A. Davies | 120
-   B. Pavard | 27
-   C. Tolisso | 28
-   D. Upamecano | 60
-   E. Choupo-Moting | 32
-   J. Kimmich | 105
-   J. Musiala | 58
-   J. Stanišić | 27
-   K. Coman | 18
-   L. Goretzka | 59
-   L. Hernández | 113
-   L. Sané | 102
-   M. Sabitzer | 84
-   N. Süle | 27
-   O. Richards | 50
-   R. Lewandowski | 63
-   S. Gnabry | 70
-   T. Müller | 51
-   T. Nianzou | 41
-   (19 rows)
+## 📄 License
 
-8. fcb_analytics=# SELECT p.match_name, COUNT(e.player_id) from events e inner join qualifiers q ON (e.e_id = q.event_id) inner join players p ON (e.player_id = p.id) WHERE e.type_id = 4 AND e.team_id = 'apoawtpvac4zqlancmvw4nk4o' AND e.outcome = '1' Group By 1 ORDER BY 1;
-   match_name | count
-   ------------------+-------
-   A. Davies | 78
-   B. Pavard | 6
-   D. Upamecano | 12
-   E. Choupo-Moting | 12
-   J. Kimmich | 84
-   J. Musiala | 36
-   J. Stanišić | 6
-   K. Coman | 18
-   L. Goretzka | 24
-   L. Hernández | 78
-   L. Sané | 24
-   M. Sabitzer | 42
-   N. Süle | 6
-   O. Richards | 36
-   R. Lewandowski | 36
-   S. Gnabry | 42
-   T. Müller | 37
-   T. Nianzou | 6
-   (18 rows)
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 📧 Contact
+
+    For questions and support, please contact:
+
+    Project Maintainer: Saud Bin Habib
+    Technical Support: saud.bin.habib@outlook.com
+
+Made with ⚽️ for FC Bayern Munich
