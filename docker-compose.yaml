@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: fcb_analytics
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./initial_database_dump.sql:/docker-entrypoint-initdb.d/initial_database_dump.sql
+    ports:
+      - "5432:5432"
+
+  fcb-fastapi:
+    build:
+      context: .
+      dockerfile: fast_api/Dockerfile
+    depends_on:
+      - postgres
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/fcb_analytics
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./fast_api:/app
+      - ./common:/app/common
+      - ./data:/app/data
+
+  fcb-streamlit:
+    build:
+      context: .
+      dockerfile: streamlit_app/Dockerfile
+    depends_on:
+      - postgres
+      - fcb-fastapi
+    environment:
+      - BACKEND_URL=http://fcb-fastapi:8000
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/fcb_analytics
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./streamlit_app:/app
+      - ./common:/app/common
+      - ./data:/app/data
+
+volumes:
+  postgres_data:
