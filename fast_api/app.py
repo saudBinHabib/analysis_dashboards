@@ -1,4 +1,5 @@
 import os
+
 # Add project root to Python path
 import sys
 
@@ -12,11 +13,15 @@ from typing import Dict, List, Tuple
 
 from common.data_loader import process_and_store_data
 from common.data_provider import (
-    get_all_aerials_duels_by_players_count, get_all_passes_by_players_count,
-    get_key_passes_by_players_count, get_long_passes_by_players_count,
-    get_player_metrics, get_shots_on_goals_by_players_count,
+    get_all_aerials_duels_by_players_count,
+    get_all_passes_by_players_count,
+    get_key_passes_by_players_count,
+    get_long_passes_by_players_count,
+    get_player_metrics,
+    get_shots_on_goals_by_players_count,
     get_successfull_aerials_duels_by_players_count,
-    get_successfull_passes_by_players_count)
+    get_successfull_passes_by_players_count,
+)
 from common.database import session
 
 app = FastAPI()
@@ -42,7 +47,17 @@ async def process_data():
 @app.get("/metrics")
 async def get_processed_data():
     """
-    Get all passes data
+    Get all metrics data
+
+    Sequence of those metrics:
+    "Number of Passes",
+    "Successful Passes",
+    "Number of Key Passes",
+    "Number of Long Passes",
+    "Number of Shots on Goal",
+    "Number of Aerial Duels",
+    "Aerial Duel Success",
+
     """
     return get_player_metrics(session, team_id)
 

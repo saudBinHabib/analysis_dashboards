@@ -27,7 +27,7 @@ Make sure you have the following installed:
 
    ```sh
    git clone git@github.com:saudBinHabib/analysis_dashboards.git
-   cd fcb_data_analytics
+   cd analysis_dashboards
    ```
 
 2. Install the required packages:
