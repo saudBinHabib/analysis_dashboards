@@ -11,9 +11,9 @@ def get_all_passes_by_players_count(session: Session, team_id: str) -> List[Tupl
     """
     Retrieving all passes by players count
 
-    :param session: Session: The type of file to get.
+    :param session: Session: Session manager to get the data from database of your choice.
     :param team_id: str: Team ID
-    return: List[tuple]: List of file names.
+    return: List[tuple]: List of tuples, which contain player name and KPI value count.
     """
     result = (
         session.query(Player.match_name, func.count(Event.player_id))
@@ -36,11 +36,11 @@ def get_successfull_passes_by_players_count(
     session: Session, team_id: str
 ) -> List[Tuple]:
     """
-    Retrieving successfull passes by players count
+    Retrieving all passes by players count
 
-    :param session: Session: The type of file to get.
+    :param session: Session: Session manager to get the data from database of your choice.
     :param team_id: str: Team ID
-    return: List[tuple]: List of file names.
+    return: List[tuple]: List of tuples, which contain player name and KPI value count.
     """
     result = (
         session.query(Player.match_name, func.count(Event.player_id))
@@ -62,11 +62,11 @@ def get_successfull_passes_by_players_count(
 
 def get_key_passes_by_players_count(session: Session, team_id: str) -> List[Tuple]:
     """
-    Retrieving key passes by players count
+    Retrieving all passes by players count
 
-    :param session: Session: The type of file to get.
+    :param session: Session: Session manager to get the data from database of your choice.
     :param team_id: str: Team ID
-    return: List[tuple]: List of file names.
+    return: List[tuple]: List of tuples, which contain player name and KPI value count.
     """
     result = (
         session.query(Player.match_name, func.count(Event.player_id))
@@ -87,11 +87,11 @@ def get_key_passes_by_players_count(session: Session, team_id: str) -> List[Tupl
 
 def get_long_passes_by_players_count(session: Session, team_id: str) -> List[Tuple]:
     """
-    Retrieving long passes by players count
+    Retrieving all passes by players count
 
-    :param session: Session: The type of file to get.
+    :param session: Session: Session manager to get the data from database of your choice.
     :param team_id: str: Team ID
-    return: List[tuple]: List of file names.
+    return: List[tuple]: List of tuples, which contain player name and KPI value count.
     """
     result = (
         session.query(Player.match_name, func.count(Event.player_id))
@@ -115,11 +115,11 @@ def get_long_passes_by_players_count(session: Session, team_id: str) -> List[Tup
 
 def get_shots_on_goals_by_players_count(session: Session, team_id: str) -> List[Tuple]:
     """
-    Retrieving Shots on Goals by players count
+    Retrieving all passes by players count
 
-    :param session: Session: The type of file to get.
+    :param session: Session: Session manager to get the data from database of your choice.
     :param team_id: str: Team ID
-    return: List[tuple]: List of file names.
+    return: List[tuple]: List of tuples, which contain player name and KPI value count.
     """
     result = (
         session.query(Player.match_name, func.count(Event.player_id))
@@ -141,11 +141,11 @@ def get_all_aerials_duels_by_players_count(
     session: Session, team_id: str
 ) -> List[Tuple]:
     """
-    Retrieving All Aerials Duels by players count
+    Retrieving all passes by players count
 
-    :param session: Session: The type of file to get.
+    :param session: Session: Session manager to get the data from database of your choice.
     :param team_id: str: Team ID
-    return: List[tuple]: List of file names.
+    return: List[tuple]: List of tuples, which contain player name and KPI value count.
     """
     result = (
         session.query(Player.match_name, func.count(Event.player_id))
@@ -167,11 +167,11 @@ def get_successfull_aerials_duels_by_players_count(
     session: Session, team_id: str
 ) -> List[Tuple]:
     """
-    Retrieving All successfull Aerials Duels by players count
+    Retrieving all passes by players count
 
-    :param session: Session: The type of file to get.
+    :param session: Session: Session manager to get the data from database of your choice.
     :param team_id: str: Team ID
-    return: List[tuple]: List of file names.
+    return: List[tuple]: List of tuples, which contain player name and KPI value count.
     """
     result = (
         session.query(Player.match_name, func.count(Event.player_id))
