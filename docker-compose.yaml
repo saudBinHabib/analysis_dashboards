@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   postgres:
@@ -9,7 +9,6 @@ services:
       POSTGRES_PASSWORD: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./initial_database_dump.sql:/docker-entrypoint-initdb.d/initial_database_dump.sql
     ports:
       - "5432:5432"
 

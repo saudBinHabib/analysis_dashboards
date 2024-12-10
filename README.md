@@ -75,7 +75,7 @@ Make sure you have the following installed:
 
     # Now you need to initialize the data processing, for which you need to store event,
     # and stats related files in the root level data directory.
-    cp -r data_dir/ data/
+    cp -r data_dir/* data/
 
     # Now you can run the custom_package to get the data, you need to use the following URL
     http://localhost:8000/process_data
@@ -105,19 +105,26 @@ Make sure you have the following installed:
 
 The `notebooks` directory contains Jupyter Notebooks for data exploration. To start exploring the data, follow these steps:
 
-1. Navigate to the `notebooks` directory:
+1. Install the requirements first, because the project need `fcb_data_provider` package, because it contains Pydantic models, ORM models, and methods to store the information in the databse.
+
+   ```sh
+   pip install -r requirements/private.txt
+   pip install -r requirements/prod.txt
+   ```
+
+2. Navigate to the `notebooks` directory:
 
    ```sh
    cd notebooks
    ```
 
-2. Create Jupyter Notebook:
+3. Create Jupyter Notebook:
 
    ```sh
    touch data-exploration.ipynb
    ```
 
-3. Open any of the notebooks to start exploring the data.
+4. Open any of the notebooks to start exploring the data.
 
 ## Contributing
 
@@ -133,5 +140,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
     Project Maintainer: Saud Bin Habib
     Technical Support: saud.bin.habib@outlook.com
-
-Made with ⚽️ for FC Bayern Munich
