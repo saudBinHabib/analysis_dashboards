@@ -10,3 +10,4 @@ DATABASE_URL = os.getenv(
 DATA_DIR = os.getenv("DATA_DIR", os.path.join(os.path.dirname(__file__), "..", "data"))
 db = Database(DATABASE_URL)
 session = db.get_session()
+logger = db.logger

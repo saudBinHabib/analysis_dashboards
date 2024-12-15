@@ -231,3 +231,13 @@ fcb_analytics=# SELECT p.match_name, COUNT(e.player_id) from events e inner join
    T. Müller | 37
    T. Nianzou | 6
    (18 rows)
+
+
+
+
+
+
+
+
+
+SELECT m.home_team_name || ' - ' || m.away_team_name as competitor, p.match_name, COUNT(e.player_id) from events e inner join qualifiers q ON (e.e_id = q.event_id) inner JOIN match_details m ON (e.match_id = m.id) inner join players p ON (e.player_id = p.id) WHERE e.type_id = 1 AND e.team_id = 'apoawtpvac4zqlancmvw4nk4o' AND q.qualifier_id not IN (2, 107, 123) GROUP BY 1, 2 ORDER BY 2;

@@ -1,18 +1,23 @@
 from collections import defaultdict
 from typing import Dict, List, Tuple
+from datetime import date
 
 import numpy as np
 from fcb_data_providers.database_models import Event, Player, Qualifier
-from sqlalchemy import func
+from sqlalchemy import func, text
 from sqlalchemy.orm import Session
+from logging import Logger
 
 
-def get_all_passes_by_players_count(session: Session, team_id: str) -> List[Tuple]:
+def get_all_passes_by_players_count(
+    session: Session, team_id: str, match_id: str
+) -> List[Tuple]:
     """
     Retrieving all passes by players count
 
     :param session: Session: Session manager to get the data from database of your choice.
     :param team_id: str: Team ID
+    :param match_id: str: Match ID
     return: List[tuple]: List of tuples, which contain player name and KPI value count.
     """
     result = (
@@ -22,6 +27,7 @@ def get_all_passes_by_players_count(session: Session, team_id: str) -> List[Tupl
         .filter(
             Event.type_id == 1,
             Event.team_id == team_id,
+            Event.match_id == match_id,
             ~Qualifier.qualifier_id.in_([2, 107, 123]),
         )
         .group_by(Player.match_name)
@@ -33,13 +39,14 @@ def get_all_passes_by_players_count(session: Session, team_id: str) -> List[Tupl
 
 
 def get_successfull_passes_by_players_count(
-    session: Session, team_id: str
+    session: Session, team_id: str, match_id: str
 ) -> List[Tuple]:
     """
     Retrieving all passes by players count
 
     :param session: Session: Session manager to get the data from database of your choice.
     :param team_id: str: Team ID
+    :param match_id: str: Match ID
     return: List[tuple]: List of tuples, which contain player name and KPI value count.
     """
     result = (
@@ -50,6 +57,7 @@ def get_successfull_passes_by_players_count(
             Event.type_id == 1,
             Event.outcome == "1",
             Event.team_id == team_id,
+            Event.match_id == match_id,
             ~Qualifier.qualifier_id.in_([2, 107, 123]),
         )
         .group_by(Player.match_name)
@@ -60,12 +68,15 @@ def get_successfull_passes_by_players_count(
     return result
 
 
-def get_key_passes_by_players_count(session: Session, team_id: str) -> List[Tuple]:
+def get_key_passes_by_players_count(
+    session: Session, team_id: str, match_id: str
+) -> List[Tuple]:
     """
     Retrieving all passes by players count
 
     :param session: Session: Session manager to get the data from database of your choice.
     :param team_id: str: Team ID
+    :param match_id: str: Match ID
     return: List[tuple]: List of tuples, which contain player name and KPI value count.
     """
     result = (
@@ -75,6 +86,7 @@ def get_key_passes_by_players_count(session: Session, team_id: str) -> List[Tupl
         .filter(
             Event.type_id.in_([13, 14, 15, 60]),  # Multiple type_id values
             Event.team_id == team_id,
+            Event.match_id == match_id,
             Qualifier.qualifier_id.in_([29, 55]),  # Specific qualifier_id values
         )
         .group_by(Player.match_name)
@@ -85,12 +97,15 @@ def get_key_passes_by_players_count(session: Session, team_id: str) -> List[Tupl
     return result
 
 
-def get_long_passes_by_players_count(session: Session, team_id: str) -> List[Tuple]:
+def get_long_passes_by_players_count(
+    session: Session, team_id: str, match_id: str
+) -> List[Tuple]:
     """
     Retrieving all passes by players count
 
     :param session: Session: Session manager to get the data from database of your choice.
     :param team_id: str: Team ID
+    :param match_id: str: Match ID
     return: List[tuple]: List of tuples, which contain player name and KPI value count.
     """
     result = (
@@ -100,6 +115,7 @@ def get_long_passes_by_players_count(session: Session, team_id: str) -> List[Tup
         .filter(
             Event.type_id == 1,  # Specific event type
             Event.team_id == team_id,  # Specific team ID
+            Event.match_id == match_id,
             Qualifier.qualifier_id == 1,  # Specific qualifier ID
             ~Qualifier.qualifier_id.in_(
                 [2, 107, 123]
@@ -113,12 +129,15 @@ def get_long_passes_by_players_count(session: Session, team_id: str) -> List[Tup
     return result
 
 
-def get_shots_on_goals_by_players_count(session: Session, team_id: str) -> List[Tuple]:
+def get_shots_on_goals_by_players_count(
+    session: Session, team_id: str, match_id: str
+) -> List[Tuple]:
     """
     Retrieving all passes by players count
 
     :param session: Session: Session manager to get the data from database of your choice.
     :param team_id: str: Team ID
+    :param match_id: str: Match ID
     return: List[tuple]: List of tuples, which contain player name and KPI value count.
     """
     result = (
@@ -128,6 +147,7 @@ def get_shots_on_goals_by_players_count(session: Session, team_id: str) -> List[
         .filter(
             Event.type_id.in_([13, 14, 15, 16]),  # Multiple event types
             Event.team_id == team_id,  # Specific team ID
+            Event.match_id == match_id,
         )
         .group_by(Player.match_name)
         .order_by(Player.match_name)
@@ -137,14 +157,50 @@ def get_shots_on_goals_by_players_count(session: Session, team_id: str) -> List[
     return result
 
 
+def get_match_details_from_view_by_match_id(
+    session: Session, match_id: str, logger: Logger
+) -> Dict[str, str | int | date]:
+    """
+    Retrieve match details from match_details view by match ID
+
+    Args:
+        session (Session): SQLAlchemy session
+        match_id (str): Match ID
+        logger (Logger): Logger instance
+
+    Returns:
+        Dict[str, str]: Dictionary with team IDs as keys and team names as values
+    """
+    # create_match_detail_view(session, logger)
+    # Query to retrieve team names by match ID
+    query = text(f"""select * from match_details where id = '{match_id}';""")
+    # Execute raw SQL query using session.execute()
+    query_result = session.execute(query).fetchone()
+
+    # Create a dictionary from the query results
+    return {
+        "match_id": query_result[0],
+        "match_date": query_result[1],
+        "match_status": query_result[2],
+        "teams": [
+            {"team_name": query_result[3], "team_id": query_result[4]},
+            {"team_name": query_result[5], "team_id": query_result[6]},
+        ],
+        "winner": query_result[7],
+        "match_length_min": query_result[8],
+        "match_length_sec": query_result[9],
+    }
+
+
 def get_all_aerials_duels_by_players_count(
-    session: Session, team_id: str
+    session: Session, team_id: str, match_id: str
 ) -> List[Tuple]:
     """
     Retrieving all passes by players count
 
     :param session: Session: Session manager to get the data from database of your choice.
     :param team_id: str: Team ID
+    :param match_id: str: Match ID
     return: List[tuple]: List of tuples, which contain player name and KPI value count.
     """
     result = (
@@ -154,6 +210,7 @@ def get_all_aerials_duels_by_players_count(
         .filter(
             Event.type_id == 4,  # Specific event type
             Event.team_id == team_id,  # Specific team ID
+            Event.match_id == match_id,
         )
         .group_by(Player.match_name)
         .order_by(Player.match_name)
@@ -164,13 +221,14 @@ def get_all_aerials_duels_by_players_count(
 
 
 def get_successfull_aerials_duels_by_players_count(
-    session: Session, team_id: str
+    session: Session, team_id: str, match_id: str
 ) -> List[Tuple]:
     """
     Retrieving all passes by players count
 
     :param session: Session: Session manager to get the data from database of your choice.
     :param team_id: str: Team ID
+    :param match_id: str: Match ID
     return: List[tuple]: List of tuples, which contain player name and KPI value count.
     """
     result = (
@@ -180,6 +238,7 @@ def get_successfull_aerials_duels_by_players_count(
         .filter(
             Event.type_id == 4,  # Specific event type
             Event.team_id == team_id,  # Specific team ID
+            Event.match_id == match_id,
             Event.outcome == "1",  # Specific outcome condition
         )
         .group_by(Player.match_name)
@@ -204,6 +263,7 @@ def z_score_normalize_with_scaling(
     Returns:
         List[Tuple[str, float]]: List of tuples with scaled normalized values
     """
+
     # Extract values for normalization
     values = [item[1] for item in data]
 
@@ -263,23 +323,30 @@ def combine_player_stats(
     return result
 
 
-def get_all_metrics(session: Session, team_id: str) -> Dict[str, List[int]]:
+def get_all_metrics(
+    session: Session, team_id: str, match_id: str
+) -> Dict[str, List[int]]:
     """
     Retrieve and combine various player statistics for a given team.
 
     Args:
         session: SQLAlchemy session
         team_id: Team ID
+        match_id: Match ID
     """
     # Retrieve statistics
-    all_passes = get_all_passes_by_players_count(session, team_id)
-    successful_passes = get_successfull_passes_by_players_count(session, team_id)
-    key_passes = get_key_passes_by_players_count(session, team_id)
-    long_passes = get_long_passes_by_players_count(session, team_id)
-    shots_on_goal = get_shots_on_goals_by_players_count(session, team_id)
-    all_aerial_duels = get_all_aerials_duels_by_players_count(session, team_id)
+    all_passes = get_all_passes_by_players_count(session, team_id, match_id)
+    successful_passes = get_successfull_passes_by_players_count(
+        session, team_id, match_id
+    )
+    key_passes = get_key_passes_by_players_count(session, team_id, match_id)
+    long_passes = get_long_passes_by_players_count(session, team_id, match_id)
+    shots_on_goal = get_shots_on_goals_by_players_count(session, team_id, match_id)
+    all_aerial_duels = get_all_aerials_duels_by_players_count(
+        session, team_id, match_id
+    )
     successful_aerial_duels = get_successfull_aerials_duels_by_players_count(
-        session, team_id
+        session, team_id, match_id
     )
 
     return (
@@ -293,13 +360,16 @@ def get_all_metrics(session: Session, team_id: str) -> Dict[str, List[int]]:
     )
 
 
-def get_player_metrics(session: Session, team_id: str) -> Dict[str, List[int]]:
+def get_player_metrics(
+    session: Session, team_id: str, match_id: str
+) -> Dict[str, List[int]]:
     """
     Retrieve and combine various player statistics for a given team.
 
     Args:
         session: SQLAlchemy session
         team_id: Team ID
+        match_id: Match ID
     """
     # Retrieve metrics
     (
@@ -310,7 +380,7 @@ def get_player_metrics(session: Session, team_id: str) -> Dict[str, List[int]]:
         shots_on_goal,
         all_aerial_duels,
         successful_aerial_duels,
-    ) = get_all_metrics(session, team_id)
+    ) = get_all_metrics(session, team_id, match_id)
 
     # Combine statistics
     player_metrics = combine_player_stats(
@@ -327,7 +397,7 @@ def get_player_metrics(session: Session, team_id: str) -> Dict[str, List[int]]:
 
 
 def get_normalized_player_metrics(
-    session: Session, team_id: str
+    session: Session, team_id: str, match_id: str
 ) -> Dict[str, List[int]]:
     """
     Retrieve and normalize various player statistics for a given team.
@@ -335,6 +405,7 @@ def get_normalized_player_metrics(
     Args:
         session: SQLAlchemy session
         team_id: Team ID
+        match_id: Match ID
     """
     # Retrieve player metrics
     (
@@ -345,7 +416,7 @@ def get_normalized_player_metrics(
         shots_on_goal,
         all_aerial_duels,
         successful_aerial_duels,
-    ) = get_all_metrics(session, team_id)
+    ) = get_all_metrics(session, team_id, match_id)
 
     # Normalize metrics
     all_passes = z_score_normalize_with_scaling(all_passes)
