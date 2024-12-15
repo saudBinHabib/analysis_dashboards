@@ -1,7 +1,7 @@
 # Live Streamlit Dashboard
 
-![Dashboard Image 1](static_files/streamit.png)
-![Dashboard Image 2](static_files/fastapi.png)
+![Dashboard Image 1](static_files/streamlit.png)
+![Dashboard Image 2](static_files/fastai.png)
 
 ## Introduction
 
