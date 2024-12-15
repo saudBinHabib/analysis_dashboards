@@ -14,7 +14,7 @@ from sqlalchemy.orm.session import Session
 from common.data_provider import (
     get_normalized_player_metrics,
     get_player_metrics,
-    get_match_details_from_view_by_match_id,
+    get_matches_from_events,
 )
 from common.database import session, logger
 
@@ -96,33 +96,28 @@ def main(
     st.title("🏆 Bundesliga Player Performance Analytics")
     st.markdown("### Visualize and Compare Player Metrics")
 
-    # Match selection
-    matches = [
-        {
-            "name": "RasenBallsport Leipzig - FC Bayern München",
-            "match_id": "buvsvzoofh7dsxi3gi5e8b6l0",
-        },
-        {
-            "name": "FC Bayern München - FC Köln ",
-            "match_id": "bt9ewry54yyw87kdh2l9p4vmc",
-        },
-        {
-            "name": "FC Bayern München - VfL Bochum 1848",
-            "match_id": "bvneqfpp4xosqjym05pv84b9w",
-        },
-    ]
-    # Todo replace matches with actual data
+    matches = get_matches_from_events(session, logger)
     match_names = [match["name"] for match in matches]
     selected_match_name = st.selectbox("Select a Match:", options=match_names)
-    selected_match_id = next(
-        match["match_id"] for match in matches if match["name"] == selected_match_name
-    )
+    selected_match_index = match_names.index(selected_match_name)
+    selected_match_id = matches[selected_match_index]["match_id"]
 
     # Get match details
-    match_details = get_match_details_from_view_by_match_id(
-        session, selected_match_id, logger
-    )
-    teams = match_details.get("teams", [])
+    # match_details = get_match_details_from_view_by_match_id(
+    #     session, selected_match_id, logger
+    # )
+    winner = matches[selected_match_index]["winner"]
+    match_date = matches[selected_match_index]["match_date"]
+    match_length_min = matches[selected_match_index]["match_length_min"]
+    col1, col2, col3 = st.columns([1, 2, 3])
+    with col1:
+        st.markdown(f"**Match Date:** {match_date}")
+    with col2:
+        st.markdown(f"**Winner:** {winner}")
+    with col3:
+        st.markdown(f"**Match Length:** {match_length_min} minutes")
+
+    teams = matches[selected_match_index]["teams"]
 
     match_names = [team["team_name"] for team in teams]
     selected_team_name = st.selectbox("Select a Team:", options=match_names)
@@ -130,28 +125,28 @@ def main(
         team["team_id"] for team in teams if team["team_name"] == selected_team_name
     )
 
-    # # Data type selection
-    data_type = st.radio(
-        "Select Data Type:",
-        options=["Z Score Normalized Metrics", "Normal Metrics"],
-    )
+    # # # Data type selection
+    # data_type = st.radio(
+    #     "Select Data Type:",
+    #     options=["Z Score Normalized Metrics", "Normal Metrics"],
+    # )
 
-    # Load the appropriate data based on user selection
-    if data_type == "Z Score Normalized Metrics":
-        normalized_data = get_normalized_player_metrics(
-            session, selected_team_id, selected_match_id
-        )
-        player_df = pd.DataFrame(normalized_data, index=METRICS).T
-    else:
-        metrics_data = get_player_metrics(session, selected_team_id, selected_match_id)
-        player_df = pd.DataFrame(metrics_data, index=METRICS).T
+    # # Load the appropriate data based on user selection
+    # if data_type == "Z Score Normalized Metrics":
+    #     normalized_data = get_normalized_player_metrics(
+    #         session, selected_team_id, selected_match_id
+    #     )
+    #     player_df = pd.DataFrame(normalized_data, index=METRICS).T
+    # else:
+    metrics_data = get_player_metrics(session, selected_team_id, selected_match_id)
+    player_df = pd.DataFrame(metrics_data, index=METRICS).T
 
     if len(player_df) > 0:
         # Create columns for layout
-        col1, col2 = st.columns([1, 2])
+        col4, col5 = st.columns([4, 5])
 
         # Player selection dropdown
-        with col1:
+        with col4:
             selected_player = st.selectbox(
                 "Select a Player", options=player_df.index.tolist()
             )
@@ -160,7 +155,7 @@ def main(
         player_metrics = player_df.loc[selected_player].tolist()
 
         # Radar Chart
-        with col2:
+        with col5:
             radar_chart = create_radar_chart(player_metrics)
             st.plotly_chart(radar_chart, use_container_width=True)
 
