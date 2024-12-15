@@ -9,6 +9,51 @@ from sqlalchemy.orm import Session
 from logging import Logger
 
 
+def get_matches_from_events(
+    session: Session, logger: Logger
+) -> List[Dict[str, str | int | date]]:
+    """
+    Retrieve all match IDs from the events table
+
+    Args:
+        session (Session): SQLAlchemy session
+        logger (Logger): Logger instance
+
+    Returns:
+        List[Dict[str, str]]: List of dictionaries with match ID and match name
+    """
+    try:
+        result = session.query(Event.match_id).distinct().all()
+        # Extract match IDs from the result
+        matches_id = [match[0] for match in result]
+        query = text(
+            f"""select * from match_details where id IN {tuple(matches_id)};"""
+        )
+        # Execute raw SQL query using session.execute()
+        matches_data = session.execute(query).fetchall()
+
+        # Extract match IDs from the query results
+        return [
+            {
+                "match_id": match[0],
+                "name": match[3] + " - " + match[5],
+                "match_date": match[1],
+                "match_status": match[2],
+                "teams": [
+                    {"team_name": match[3], "team_id": match[4]},
+                    {"team_name": match[5], "team_id": match[6]},
+                ],
+                "winner": match[3] if match[7] == "home" else match[5],
+                "match_length_min": match[8],
+                "match_length_sec": match[9],
+            }
+            for match in matches_data
+        ]
+    except Exception as e:
+        logger.error(f"Error retrieving match IDs: {e}")
+        return []
+
+
 def get_all_passes_by_players_count(
     session: Session, team_id: str, match_id: str
 ) -> List[Tuple]:
@@ -155,41 +200,6 @@ def get_shots_on_goals_by_players_count(
     )
 
     return result
-
-
-def get_match_details_from_view_by_match_id(
-    session: Session, match_id: str, logger: Logger
-) -> Dict[str, str | int | date]:
-    """
-    Retrieve match details from match_details view by match ID
-
-    Args:
-        session (Session): SQLAlchemy session
-        match_id (str): Match ID
-        logger (Logger): Logger instance
-
-    Returns:
-        Dict[str, str]: Dictionary with team IDs as keys and team names as values
-    """
-    # create_match_detail_view(session, logger)
-    # Query to retrieve team names by match ID
-    query = text(f"""select * from match_details where id = '{match_id}';""")
-    # Execute raw SQL query using session.execute()
-    query_result = session.execute(query).fetchone()
-
-    # Create a dictionary from the query results
-    return {
-        "match_id": query_result[0],
-        "match_date": query_result[1],
-        "match_status": query_result[2],
-        "teams": [
-            {"team_name": query_result[3], "team_id": query_result[4]},
-            {"team_name": query_result[5], "team_id": query_result[6]},
-        ],
-        "winner": query_result[7],
-        "match_length_min": query_result[8],
-        "match_length_sec": query_result[9],
-    }
 
 
 def get_all_aerials_duels_by_players_count(
