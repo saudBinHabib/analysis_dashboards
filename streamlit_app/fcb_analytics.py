@@ -1,91 +1,90 @@
-import os
+import streamlit as st
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+from typing import List, Dict, Any
 import sys
+import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from typing import Dict, List, Tuple
-
-import numpy as np
-import pandas as pd
-import plotly.graph_objs as go
-import streamlit as st
-from sqlalchemy.orm.session import Session
-
+from common.database import session, logger
 from common.data_provider import (
-    get_normalized_player_metrics,
     get_player_metrics,
     get_matches_from_events,
 )
-from common.database import session, logger
-
-# Define the performance metrics consistently
-METRICS = [
-    "Number of Passes",
-    "Successful Passes",
-    "Number of Key Passes",
-    "Number of Long Passes",
-    "Number of Shots on Goal",
-    "Number of Aerial Duels",
-    "Aerial Duel Success",
-]
 
 
-def create_radar_chart(player_metrics, metrics=METRICS):
-    """
-    Create an interactive radar chart for a specific player
+class MatchAnalyzer:
+    def __init__(self):
+        self.metrics = [
+            "Number of Passes",
+            "Successful Passes",
+            "Number of Key Passes",
+            "Number of Long Passes",
+            "Number of Shots on Goal",
+            "Number of Aerial Duels",
+            "Aerial Duel Success",
+        ]
 
-    Args:
-        player_metrics (list): Performance metrics for the player
-        metrics (list): Metric names
+        self.reference_maxes = {
+            "Number of Passes": 8000,
+            "Successful Passes": 7000,
+            "Number of Key Passes": 100,
+            "Number of Long Passes": 200,
+            "Number of Shots on Goal": 1500,
+            "Number of Aerial Duels": 250,
+            "Aerial Duel Success": 200,
+        }
 
-    Returns:
-        Plotly figure object
-    """
-    fig = go.Figure(
-        data=go.Scatterpolar(
-            r=player_metrics,
-            theta=metrics,
-            fill="toself",
-            line_color="rgb(51, 153, 255)",  # Vibrant blue
-            fillcolor="rgba(51, 153, 255, 0.4)",  # Transparent blue
-        )
-    )
+    def scale_data(
+        self, raw_data: Dict[str, List[float]]
+    ) -> Dict[str, Dict[str, float]]:
+        """Scale the raw metrics data for visualization"""
+        scaled_data = {}
+        for player, values in raw_data.items():
+            scaled_values = {}
+            for metric, value in zip(self.metrics, values):
+                scaled_values[metric] = min(value / self.reference_maxes[metric], 1)
+            scaled_data[player] = scaled_values
+        return scaled_data
 
-    # Enhanced layout
-    fig.update_layout(
-        polar=dict(
-            radialaxis=dict(
-                visible=True,
-                range=[0, 100],  # Fixed range for consistent comparison
-                ticksuffix="%",
-                tickmode="linear",
-                tick0=0,
-                dtick=20,
-            )
-        ),
-        title={
-            "text": f"Performance Metrics Analysis",
-            "y": 0.95,
-            "x": 0.5,
-            "xanchor": "center",
-            "yanchor": "top",
-            "font": dict(size=20),
-        },
-        width=700,
-        height=700,
-    )
+    def plot_radar(
+        self,
+        raw_data: Dict[str, List[float]],
+        players_to_plot: List[str] = None,
+        title: str = "Player Comparison",
+    ) -> plt.Figure:
+        """Generate radar plot for selected players"""
+        scaled_data = self.scale_data(raw_data)
 
-    return fig
+        if players_to_plot is None:
+            players_to_plot = list(raw_data.keys())
+
+        angles = np.linspace(0, 2 * np.pi, len(self.metrics), endpoint=False)
+        angles = np.concatenate((angles, [angles[0]]))
+
+        fig, ax = plt.subplots(figsize=(10, 10), subplot_kw=dict(projection="polar"))
+
+        colors = plt.cm.rainbow(np.linspace(0, 1, len(players_to_plot)))
+        for player, color in zip(players_to_plot, colors):
+            values = [scaled_data[player][metric] for metric in self.metrics]
+            values = np.concatenate((values, [values[0]]))
+
+            ax.plot(angles, values, "o-", linewidth=2, label=player, color=color)
+            ax.fill(angles, values, alpha=0.25, color=color)
+
+        ax.set_xticks(angles[:-1])
+        ax.set_xticklabels(self.metrics, size=8)
+        plt.legend(loc="upper right", bbox_to_anchor=(0.1, 0.1))
+        plt.title(title, size=20, y=1.05)
+        ax.grid(True)
+
+        return fig
 
 
-def main(
-    session: Session,
-):
-    """
-    Main application function to display player performance analytics
-    :param normalized_data: Dict[str, List[int]]: Player metrics
-    :param metrics_data: Dict[str, List[int]]: Player metrics
-    """
+def create_match_dashboard(session, logger):
+    """Main function to create the Streamlit dashboard"""
 
     # Page configuration
     st.set_page_config(
@@ -96,85 +95,89 @@ def main(
     st.title("🏆 Bundesliga Player Performance Analytics")
     st.markdown("### Visualize and Compare Player Metrics")
 
-    matches = get_matches_from_events(session, logger)
-    match_names = [match["name"] for match in matches]
-    selected_match_name = st.selectbox("Select a Match:", options=match_names)
-    selected_match_index = match_names.index(selected_match_name)
-    selected_match_id = matches[selected_match_index]["match_id"]
+    # Initialize components
+    analyzer = MatchAnalyzer()
 
-    # Get match details
-    # match_details = get_match_details_from_view_by_match_id(
-    #     session, selected_match_id, logger
-    # )
-    winner = matches[selected_match_index]["winner"]
-    match_date = matches[selected_match_index]["match_date"]
-    match_length_min = matches[selected_match_index]["match_length_min"]
-    col1, col2, col3 = st.columns([1, 2, 3])
-    with col1:
-        st.markdown(f"**Match Date:** {match_date}")
-    with col2:
-        st.markdown(f"**Winner:** {winner}")
-    with col3:
-        st.markdown(f"**Match Length:** {match_length_min} minutes")
+    try:
+        # Sidebar for player selection
+        st.sidebar.header("Selection Area")
+        # Get matches data
+        matches = get_matches_from_events(session, logger)
+        match_names = [match["name"] for match in matches]
 
-    teams = matches[selected_match_index]["teams"]
+        # Match selection
+        selected_match_name = st.sidebar.selectbox(
+            "Select a Match:", options=match_names
+        )
+        selected_match_index = match_names.index(selected_match_name)
+        selected_match_id = matches[selected_match_index]["match_id"]
 
-    match_names = [team["team_name"] for team in teams]
-    selected_team_name = st.selectbox("Select a Team:", options=match_names)
-    selected_team_id = next(
-        team["team_id"] for team in teams if team["team_name"] == selected_team_name
-    )
-
-    # # # Data type selection
-    # data_type = st.radio(
-    #     "Select Data Type:",
-    #     options=["Z Score Normalized Metrics", "Normal Metrics"],
-    # )
-
-    # # Load the appropriate data based on user selection
-    # if data_type == "Z Score Normalized Metrics":
-    #     normalized_data = get_normalized_player_metrics(
-    #         session, selected_team_id, selected_match_id
-    #     )
-    #     player_df = pd.DataFrame(normalized_data, index=METRICS).T
-    # else:
-    metrics_data = get_player_metrics(session, selected_team_id, selected_match_id)
-    player_df = pd.DataFrame(metrics_data, index=METRICS).T
-
-    if len(player_df) > 0:
-        # Create columns for layout
-        col4, col5 = st.columns([4, 5])
-
-        # Player selection dropdown
-        with col4:
-            selected_player = st.selectbox(
-                "Select a Player", options=player_df.index.tolist()
+        # Display match details
+        st.subheader("Match Information")
+        col1, col2, col3 = st.columns([1, 2, 3])
+        with col1:
+            st.markdown(
+                f"**Match Date:** {matches[selected_match_index]['match_date']}"
+            )
+        with col2:
+            st.markdown(f"**Winner:** {matches[selected_match_index]['winner']}")
+        with col3:
+            st.markdown(
+                f"**Match Length:** {matches[selected_match_index]['match_length_min']} minutes"
             )
 
-        # Get selected player's metrics
-        player_metrics = player_df.loc[selected_player].tolist()
-
-        # Radar Chart
-        with col5:
-            radar_chart = create_radar_chart(player_metrics)
-            st.plotly_chart(radar_chart, use_container_width=True)
-
-        # Detailed Metrics Table
-        st.subheader(f"{selected_player} - Detailed Performance Metrics")
-        metrics_df = pd.DataFrame({"Metric": METRICS, "Value": player_metrics})
-        metrics_df["Value"] = metrics_df["Value"].apply(lambda x: f"{x}")
-        st.dataframe(metrics_df, use_container_width=True)
-
-        # Optional: Comparative Insights
-        st.markdown("### Comparative Insights")
-        comparison_df = player_df.copy()
-        comparison_df["Avg Performance"] = comparison_df.mean(axis=1)
-        st.dataframe(
-            comparison_df.sort_values("Avg Performance", ascending=False),
-            use_container_width=True,
+        # Team selection
+        teams = matches[selected_match_index]["teams"]
+        match_names = [team["team_name"] for team in teams]
+        selected_team_name = st.sidebar.selectbox("Select a Team:", options=match_names)
+        selected_team_id = next(
+            team["team_id"] for team in teams if team["team_name"] == selected_team_name
         )
+
+        # Get player metrics
+        metrics_data = get_player_metrics(session, selected_team_id, selected_match_id)
+
+        if metrics_data:
+            # Player selection
+            available_players = list(metrics_data.keys())
+            selected_players = st.sidebar.multiselect(
+                "Select Players to Compare:",
+                available_players,
+                default=(
+                    available_players[:2]
+                    if len(available_players) > 1
+                    else available_players[:1]
+                ),
+            )
+
+            if selected_players:
+                # Create and display radar chart
+                st.subheader("Player Performance Comparison")
+                selected_data = {
+                    player: metrics_data[player] for player in selected_players
+                }
+                fig = analyzer.plot_radar(
+                    selected_data,
+                    selected_players,
+                    f"{selected_team_name} - Player Comparison",
+                )
+                st.pyplot(fig)
+
+                # Display raw metrics
+                st.subheader("Raw Metrics")
+                metrics_df = pd.DataFrame(
+                    {player: metrics_data[player] for player in selected_players},
+                    index=analyzer.metrics,
+                ).T
+                st.dataframe(metrics_df)
+
+        else:
+            st.warning("No player metrics data available for this selection.")
+
+    except Exception as e:
+        logger.error(f"Error in dashboard: {str(e)}")
+        st.error("An error occurred while loading the dashboard. Please try again.")
 
 
 if __name__ == "__main__":
-
-    main(session)
+    create_match_dashboard(session, logger)
