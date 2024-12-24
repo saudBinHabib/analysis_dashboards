@@ -114,7 +114,7 @@ def create_match_dashboard(session, logger):
 
         # Display match details
         st.subheader("Match Information")
-        col1, col2, col3 = st.columns([1, 2, 3])
+        col1, col2, col3 = st.columns([1, 1, 1])
         with col1:
             st.markdown(
                 f"**Match Date:** {matches[selected_match_index]['match_date']}"
@@ -152,7 +152,7 @@ def create_match_dashboard(session, logger):
 
             if selected_players:
                 # Create and display radar chart
-                st.subheader("Player Performance Comparison")
+
                 selected_data = {
                     player: metrics_data[player] for player in selected_players
                 }
@@ -161,9 +161,17 @@ def create_match_dashboard(session, logger):
                     selected_players,
                     f"{selected_team_name} - Player Comparison",
                 )
-                st.pyplot(fig)
 
-                # Display raw metrics
+                st.subheader("Player Performance Comparison")
+                st.markdown(
+                    "The radar chart below shows the comparison of player metrics for the selected players."
+                )
+                col1, col2, col3 = st.columns([2, 3, 2])
+                with col2:
+                    fig_container = st.container()
+                    with fig_container:
+                        st.pyplot(fig, use_container_width=True)
+
                 st.subheader("Raw Metrics")
                 metrics_df = pd.DataFrame(
                     {player: metrics_data[player] for player in selected_players},
