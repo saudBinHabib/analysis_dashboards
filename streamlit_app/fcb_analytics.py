@@ -1,8 +1,7 @@
 import streamlit as st
-import numpy as np
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 import pandas as pd
-from typing import List, Dict, Any
+from typing import Dict, List, Any
 import sys
 import os
 
@@ -28,8 +27,8 @@ class MatchAnalyzer:
         ]
 
         self.reference_maxes = {
-            "Number of Passes": 8000,
-            "Successful Passes": 7000,
+            "Number of Passes": 10000,
+            "Successful Passes": 9000,
             "Number of Key Passes": 100,
             "Number of Long Passes": 200,
             "Number of Shots on Goal": 1500,
@@ -37,48 +36,49 @@ class MatchAnalyzer:
             "Aerial Duel Success": 200,
         }
 
-    def scale_data(
-        self, raw_data: Dict[str, List[float]]
-    ) -> Dict[str, Dict[str, float]]:
+    def scale_data(self, raw_data: Dict[str, List[float]]) -> Dict[str, List[float]]:
         """Scale the raw metrics data for visualization"""
         scaled_data = {}
         for player, values in raw_data.items():
-            scaled_values = {}
-            for metric, value in zip(self.metrics, values):
-                scaled_values[metric] = min(value / self.reference_maxes[metric], 1)
+            scaled_values = [
+                min(value / self.reference_maxes[metric], 1)
+                for metric, value in zip(self.metrics, values)
+            ]
             scaled_data[player] = scaled_values
         return scaled_data
 
-    def plot_radar(
+    def create_radar_chart(
         self,
         raw_data: Dict[str, List[float]],
         players_to_plot: List[str] = None,
         title: str = "Player Comparison",
-    ) -> plt.Figure:
-        """Generate radar plot for selected players"""
-        scaled_data = self.scale_data(raw_data)
-
+    ) -> go.Figure:
+        """Create an interactive radar chart using Plotly"""
         if players_to_plot is None:
             players_to_plot = list(raw_data.keys())
 
-        angles = np.linspace(0, 2 * np.pi, len(self.metrics), endpoint=False)
-        angles = np.concatenate((angles, [angles[0]]))
+        scaled_data = self.scale_data(raw_data)
 
-        fig, ax = plt.subplots(figsize=(10, 10), subplot_kw=dict(projection="polar"))
+        fig = go.Figure()
 
-        colors = plt.cm.rainbow(np.linspace(0, 1, len(players_to_plot)))
-        for player, color in zip(players_to_plot, colors):
-            values = [scaled_data[player][metric] for metric in self.metrics]
-            values = np.concatenate((values, [values[0]]))
+        for player in players_to_plot:
+            fig.add_trace(
+                go.Scatterpolar(
+                    r=scaled_data[player]
+                    + [scaled_data[player][0]],  # Complete the circle
+                    theta=self.metrics + [self.metrics[0]],  # Complete the circle
+                    name=player,
+                    fill="toself",
+                    opacity=0.6,
+                )
+            )
 
-            ax.plot(angles, values, "o-", linewidth=2, label=player, color=color)
-            ax.fill(angles, values, alpha=0.25, color=color)
-
-        ax.set_xticks(angles[:-1])
-        ax.set_xticklabels(self.metrics, size=8)
-        plt.legend(loc="upper right", bbox_to_anchor=(0.1, 0.1))
-        plt.title(title, size=20, y=1.05)
-        ax.grid(True)
+        fig.update_layout(
+            polar=dict(radialaxis=dict(visible=True, range=[0, 1])),
+            showlegend=True,
+            title=dict(text=title, x=0.5, y=0.95),
+            height=600,
+        )
 
         return fig
 
@@ -133,9 +133,14 @@ def create_match_dashboard(session, logger):
         selected_team_id = next(
             team["team_id"] for team in teams if team["team_name"] == selected_team_name
         )
+        st.sidebar.markdown("<br><br>", unsafe_allow_html=True)
 
-        # Get player metrics
-        metrics_data = get_player_metrics(session, selected_team_id, selected_match_id)
+        # Cache player metrics data
+        @st.cache_data
+        def get_cached_player_metrics(team_id, match_id):
+            return get_player_metrics(session, team_id, match_id)
+
+        metrics_data = get_cached_player_metrics(selected_team_id, selected_match_id)
 
         if metrics_data:
             # Player selection
@@ -151,33 +156,35 @@ def create_match_dashboard(session, logger):
             )
 
             if selected_players:
-                # Create and display radar chart
+                # Create tabs for different visualizations
+                tab1, tab2 = st.tabs(["Radar Chart", "Raw Data"])
 
-                selected_data = {
-                    player: metrics_data[player] for player in selected_players
-                }
-                fig = analyzer.plot_radar(
-                    selected_data,
-                    selected_players,
-                    f"{selected_team_name} - Player Comparison",
-                )
+                with tab1:
+                    # Create and display radar chart using Plotly
+                    selected_data = {
+                        player: metrics_data[player] for player in selected_players
+                    }
+                    fig = analyzer.create_radar_chart(
+                        selected_data,
+                        selected_players,
+                        f"{selected_team_name} - Player Comparison",
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
 
-                st.subheader("Player Performance Comparison")
-                st.markdown(
-                    "The radar chart below shows the comparison of player metrics for the selected players."
-                )
-                col1, col2, col3 = st.columns([2, 3, 2])
-                with col2:
-                    fig_container = st.container()
-                    with fig_container:
-                        st.pyplot(fig, use_container_width=True)
+                with tab2:
+                    # Display raw metrics with formatted DataFrame
+                    metrics_df = pd.DataFrame(
+                        {player: metrics_data[player] for player in selected_players},
+                        index=analyzer.metrics,
+                    ).T
 
-                st.subheader("Raw Metrics")
-                metrics_df = pd.DataFrame(
-                    {player: metrics_data[player] for player in selected_players},
-                    index=analyzer.metrics,
-                ).T
-                st.dataframe(metrics_df)
+                    # Format the DataFrame for better readability
+                    st.dataframe(
+                        metrics_df.style.format("{:.1f}").background_gradient(
+                            cmap="YlOrRd", axis=None
+                        ),
+                        use_container_width=True,
+                    )
 
         else:
             st.warning("No player metrics data available for this selection.")
